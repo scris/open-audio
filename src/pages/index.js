@@ -1,37 +1,36 @@
 // pages/index.js
 import {
+  Box,
+  Button,
   Container,
   Flex,
-  Heading,
   FormControl,
+  FormHelperText,
   FormLabel,
-  Input,
-  Textarea,
-  Select,
-  Button,
-  VStack,
+  Grid,
+  Heading,
   HStack,
+  Input,
+  Select,
   Slider,
-  SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  SliderMark,
-  Text,
-  useToast,
+  SliderTrack,
   Spinner,
-  Grid,
-  Box,
-  Tooltip,
   Switch,
-  FormHelperText
+  Text,
+  Textarea,
+  Tooltip,
+  useToast,
+  VStack
 } from '@chakra-ui/react';
-import OpenAI from "openai";
-import { useState, useRef, useEffect } from 'react';
-import { saveAs } from 'file-saver'; // You will need to install file-saver: npm install file-saver
+import {useEffect, useRef, useState} from 'react';
+import {saveAs} from 'file-saver'; // You will need to install file-saver: npm install file-saver
 
 
 export default function Home() {
   const [apiKeyInput, setApiKey] = useState('');
+  const [apiUrlInput, setApiUrl] = useState('api.openai.com');
   const [model, setModel] = useState('tts-1');
   const [inputText, setInputText] = useState('');
   const [voice, setVoice] = useState('alloy');
@@ -74,15 +73,20 @@ export default function Home() {
       headers.append("Content-Type", "application/json");
 
       // Define the request body
-      const body = JSON.stringify({
-        model: model,
-        input: inputText,
-        voice: voice,
-        speed: speed.toFixed(1)
-      });
+      const body = apiUrlInput === 'api.openai.com' ?
+        JSON.stringify({
+          model: model,
+          input: inputText,
+          voice: voice,
+          speed: speed.toFixed(1)
+        }) : JSON.stringify({
+          model: model,
+          input: inputText,
+          voice: voice
+        });
 
       // Make the fetch request to the OpenAI API
-      const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      const response = await fetch(`https://${apiUrlInput}/v1/audio/speech`, {
         method: 'POST',
         headers: headers,
         body: body,
@@ -118,9 +122,6 @@ export default function Home() {
   };
 
 
-
-
-
   const handleInputChange = (e) => {
     if (e.target.value.length <= 4096) {
       setInputText(e.target.value);
@@ -140,39 +141,54 @@ export default function Home() {
             maxW="md" // Maximum width
           >
             <VStack spacing={6} as="form" onSubmit={handleSubmit} width="full" maxW="md">
-            <Box bg='black' w='100%' p={5} borderTopRadius="md" boxShadow="lg">
-  <Heading textAlign="center" color="white">Open-Audio TTS</Heading>
-  <Text fontSize="xs" color="gray.100" textAlign="center" mt={2}>Powered by OpenAI TTS </Text>
-  <Text fontSize="xs" color="gray.100" textAlign="center" mt={2} fontWeight={'700'}>
-        <a href="https://github.com/Justmalhar/open-audio" target="_blank" rel="noopener noreferrer" style={{ color: 'gray.100' }}>
-          View on GitHub
-        </a>
-      </Text>
-</Box>
+              <Box bg='black' w='100%' p={5} borderTopRadius="md" boxShadow="lg">
+                <Heading textAlign="center" color="white">Open-Audio TTS</Heading>
+                <Text fontSize="xs" color="gray.100" textAlign="center" mt={2}>Powered by OpenAI TTS</Text>
+                <Text fontSize="xs" color="gray.100" textAlign="center" mt={2}>
+                  Edited version, with custom url support
+                </Text>
+                <Text fontSize="xs" color="gray.100" textAlign="center" mt={2} fontWeight={'700'}>
+                  <a href="https://github.com/scris/open-audio" target="_blank" rel="noopener noreferrer"
+                     style={{color: 'gray.100'}}>
+                    View on GitHub
+                  </a>
+                </Text>
+              </Box>
               <Grid
-                templateColumns={{ md: '4fr 1fr' }} // 80-20 ratio
+                templateColumns={{md: '4fr 1fr'}} // 80-20 ratio
                 gap={4}
                 width="full"
               >
-                <FormControl isRequired>
-                  <FormLabel htmlFor='api-key'>API Key</FormLabel>
-                  <Input
-                    id='api-key'
-                    placeholder='Enter your OpenAI API key'
-                    type='password'
-                    value={apiKeyInput}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    variant="outline"
-                    borderColor="black"
-                  />
-                </FormControl>
+                <VStack align="start" spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel htmlFor='api-url'>API Url</FormLabel>
+                    <Input
+                      id='api-url'
+                      placeholder='Enter your OpenAI API endpoint url'
+                      value={apiUrlInput}
+                      onChange={(e) => setApiUrl(e.target.value)}
+                      variant="outline"
+                      borderColor="black"
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel htmlFor='api-key'>API Key</FormLabel>
+                    <Input
+                      id='api-key'
+                      placeholder='Enter your OpenAI API key'
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      variant="outline"
+                      borderColor="black"
+                    />
+                  </FormControl></VStack>
 
                 <FormControl>
                   <VStack align="start" spacing={0}>
                     <FormLabel htmlFor='model'>
                       Quality
                     </FormLabel>
-                    <HStack align="center" h='100%' mx='0' mt='2' >
+                    <HStack align="center" h='100%' mx='0' mt='2'>
                       <Switch
                         id='model'
                         colorScheme="blackAlpha"
@@ -217,7 +233,7 @@ export default function Home() {
                     borderColor="black"
                     focusBorderColor="black"
                     colorScheme="blackAlpha"
-                    _hover={{ borderColor: 'gray.400' }} // Optional: style for hover state
+                    _hover={{borderColor: 'gray.400'}} // Optional: style for hover state
                   >
                     {/* List of supported voices */}
                     <option value='alloy'>Alloy</option>
@@ -244,7 +260,7 @@ export default function Home() {
                     aria-label='slider-ex-1'
                   >
                     <SliderTrack bg="gray">
-                      <SliderFilledTrack bg="black" />
+                      <SliderFilledTrack bg="black"/>
                     </SliderTrack>
                     <Tooltip
                       hasArrow
@@ -254,7 +270,7 @@ export default function Home() {
                       isOpen={showTooltip}
                       label={`${(sliderValue).toFixed(2)}x`}
                     >
-                      <SliderThumb />
+                      <SliderThumb/>
                     </Tooltip>
                   </Slider>
                 </FormControl>
